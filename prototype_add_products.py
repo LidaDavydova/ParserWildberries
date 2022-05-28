@@ -5,11 +5,6 @@ from woocommerce import API
 
 
 
-
-
-
-
-
 def add_to_wp(pr):
     wcapi = API(
         url="https://4.kpipartners.ru",

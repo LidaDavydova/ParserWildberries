@@ -1,8 +1,28 @@
 from requests_html import HTMLSession
+import os
+
+from woocommerce import API
+
+# from dotenv import load_dotenv
 
 
-from prototype_add_products import add_to_wp
+# from prototype_add_products import add_to_wp
+# load_dotenv()
 
+# consumer_key = os.getenv("CONSUMER_KEY")
+consumer_key = "ck_53ab65e2203636a08a70858b5c4a8af1db8ba0cc"
+# consumer_secret = os.getenv("CONSUMER_SECRET")
+consumer_secret = "cs_fc6beeed5832747ed21fb088c75a4858aac037f5"
+
+
+def add_to_wp(pr):
+    wcapi = API(
+        url="https://4.kpipartners.ru",
+        consumer_key=consumer_key,
+        consumer_secret=consumer_secret,
+        timeout=50,
+    )
+    response = wcapi.post("products", pr)
 
 
 def parse_img(product):
@@ -59,7 +79,8 @@ if __name__ == "__main__":
     s = HTMLSession()
 
     r = s.get(url)
-    r.html.render(sleep=1)
+    r.html.render(sleep=2)
+
     prod = r.html.find("div.product-card.j-card-item.j-good-for-listing-event")
 
     for product in prod:

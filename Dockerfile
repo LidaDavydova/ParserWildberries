@@ -1,7 +1,6 @@
 FROM python:3.10
 
 ADD req_html.py . 
-ADD prototype_add_products.py . 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 

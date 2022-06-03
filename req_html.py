@@ -15,61 +15,110 @@ consumer_key = "ck_53ab65e2203636a08a70858b5c4a8af1db8ba0cc"
 consumer_secret = "cs_fc6beeed5832747ed21fb088c75a4858aac037f5"
 
 
-def add_to_wp(pr):
-    wcapi = API(
-        url="https://4.kpipartners.ru",
-        consumer_key=consumer_key,
-        consumer_secret=consumer_secret,
-        timeout=50,
-    )
-    response = wcapi.post("products", pr)
+# print(price)
 
 
-def parse_img(product):
-    img_tag = r.html.xpath(f'//*[@id="{product.attrs["id"]}"]/div/a/div[1]/div[2]/img')
-    img_tag_without_probels = str(img_tag).split("=")
+class ProductWB:
+    def __init__(self, request):
+        # self.product = product
+        self.request = request
+        self.session = HTMLSession()
 
-    not_valid_link = img_tag_without_probels[6]
-    valid_img = "https:" + not_valid_link.split(">", 1)[0][1:-1]
+    def add_to_model(self, valid_name_product, valid_img, price):
+        # print(valid_img)
+        model = {
+            "name": valid_name_product,
+            "regular_price": price,
+            "images": [
+                {
+                    "src": valid_img,
+                    "alt": valid_name_product,
+                }
+            ],
+        }
+        return model
 
-    not_valid_name_product = img_tag_without_probels[5]
+    def add_to_wp(self, pr):
+        wcapi = API(
+            url="https://4.kpipartners.ru",
+            consumer_key=consumer_key,
+            consumer_secret=consumer_secret,
+            timeout=150,
+        )
+        response = wcapi.post("products", pr)
 
-    valid_name_product = not_valid_name_product.split(" src", 1)[0][1:-1]
-    return valid_img, valid_name_product
+    def parse_product(self, prod):
+        # print(prod.absolute_links)
+        i = list(prod.absolute_links)
+        for j in i:
+            # print(j)
+            # for item in prod.absolute_links:
+            #     print(item)
+            if "lk/basket" in j:
+                pass
+            else:
+                # print(item)
+                req = self.session.get(j)
+                req.html.render(sleep=2)
+                # i = r.html.find("span.price-block__final-price", first=True).text
+                # print(item)
+                # print("hello")
+                price = req.html.xpath(
+                    '//*[@id="infoBlockProductCard"]/div[2]/div/div/p/span', first=True
+                ).text[:-2]
+                # print("hello", price)
+                product_name = req.html.xpath(
+                    "/html/body/div[1]/main/div[2]/div/div/div[2]/div/div[3]/div[7]/h1",
+                    first=True,
+                ).text
+                if "/" in product_name:
+                    product_name = product_name.replace("/", "")
+                # print(product_name)
+                not_valid_img = req.html.xpath(
+                    "/html/body/div[1]/main/div[2]/div/div/div[2]/div/div[1]/div/div[1]/div/div/div[1]/ul/li[1]/div/img",
+                    first=True,
+                ).attrs["src"]
 
+                valid_img = "https:" + not_valid_img
+                model = self.add_to_model(
+                    valid_name_product=product_name, valid_img=valid_img, price=price
+                )
+                # print(model)
+                self.add_to_wp(model)
+                # print(not_valid_img)
 
-def add_to_model(product, valid_name_product, valid_img, price):
-    # print(valid_img)
-    model = {
-        "name": valid_name_product,
-        "regular_price": price,
-        "images": [
-            {
-                "src": valid_img,
-                "alt": valid_name_product,
-            }
-        ],
-    }
-    return model
+    def get_all_products(self):
+        pages = self.request.html.xpath(
+            "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[5]/div/div",
+            first=True,
+        )
+        # print(pages.absolute_links == set())
+        if pages.absolute_links != set():
+            for page in pages.absolute_links:
+                # print(page)
+                page_url = self.session.get(page)
+                page_url.html.render(sleep=2)
 
+                product = page_url.html.xpath(
+                    "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[4]/div/div",
+                    first=True,
+                )
+                self.parse_product(product)
+                # print(prod.absolute_links)
+                # product_count.append(*prod.absolute_links)
+                # print(len(product_count))
+        else:
+            product = self.request.html.xpath(
+                "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[4]/div/div",
+                first=True,
+            )
+            self.parse_product(product)
+        # return product
 
-def get_price(product):
-    # print(product.text)
-    i = product.text.replace("\n", " ")
-    # print(i)
-    j = i.split("Реклама Быстрый просмотр ", 1)[1]
-    h = j.split()
-    # print(h)
-
-    # print(i.attrs)
-    price = h[4]
-    if price.isnumeric():
-        if int(price) < 100:
-            price = h[4] + h[5]
-            # print(price)
-    return price
-
-    # print(price)
+        # price = self.get_price()
+        # valid_img, valid_name_product = self.parse_img()
+        # model = self.add_to_model(product_name, valid_img, price)
+        # self.add_to_wp(model)
 
 
 if __name__ == "__main__":
@@ -77,14 +126,10 @@ if __name__ == "__main__":
     url = str(input())
 
     s = HTMLSession()
-
     r = s.get(url)
+    # print("hello")
+    # print(r.text)
     r.html.render(sleep=2)
-
-    prod = r.html.find("div.product-card.j-card-item.j-good-for-listing-event")
-
-    for product in prod:
-        price = get_price(product)
-        valid_img, valid_name_product = parse_img(product)
-        model = add_to_model(product, valid_name_product, valid_img, price)
-        add_to_wp(model)
+    product_class_object = ProductWB(request=r)
+    product_class_object.get_all_products()
+    # print("gohor")

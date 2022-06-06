@@ -1,6 +1,7 @@
 from requests_html import HTMLSession
 import os
 
+import time
 from woocommerce import API
 
 # from dotenv import load_dotenv
@@ -23,17 +24,44 @@ class ProductWB:
         # self.product = product
         self.request = request
         self.session = HTMLSession()
+        self.success_post_count = 0
+        self.all_post_count = 0
 
-    def add_to_model(self, valid_name_product, valid_img, price):
+    def add_to_model(
+        self,
+        valid_name_product,
+        valid_img,
+        alt_img,
+        price,
+        valid_second_img,
+        alt_second_img,
+        valid_third_img,
+        alt_third_img,
+    ):
         # print(valid_img)
         model = {
             "name": valid_name_product,
             "regular_price": price,
             "images": [
                 {
-                    "src": valid_img,
-                    "alt": valid_name_product,
-                }
+                    "src": valid_img if valid_img != "hello" else None,
+                    "alt": alt_img if alt_img != "ok" else None,
+                },
+                {
+                    "src": valid_second_img if valid_second_img != "hello"
+                    # else None,  # valid_img,
+                    else valid_img,
+                    "alt": alt_second_img if alt_second_img != "ok"
+                    # else None,  # alt_img,
+                    else alt_img,
+                },
+                {
+                    "src": valid_third_img if valid_third_img != "hello"
+                    # else None,  # valid_img,
+                    else valid_img,
+                    # "alt": alt_third_img if alt_third_img != "ok" else None,  # alt_img,
+                    "alt": alt_third_img if alt_third_img != "ok" else alt_img,
+                },
             ],
         }
         return model
@@ -43,13 +71,47 @@ class ProductWB:
             url="https://4.kpipartners.ru",
             consumer_key=consumer_key,
             consumer_secret=consumer_secret,
-            timeout=150,
+            timeout=2500,
         )
         response = wcapi.post("products", pr)
+
+        status = response.status_code
+        # self.all_post_count += 1
+        if status >= 400:
+            # print(self.success_post_count)
+            time.sleep(5)
+            response = wcapi.post("products", pr)
+            # print(response.status_code)
+            if response.status_code < 400:
+                self.success_post_count += 1
+                # print(self.success_post_count)
+            # print(response)
+        else:
+            self.success_post_count += 1
+        # print(self.success_post_count)
+        # print(self.all_post_count)
+
+    def get_src_and_alt_image(self, tag_position, req):
+        try:
+            not_valid_img = req.html.xpath(
+                f"/html/body/div[1]/main/div[2]/div/div/div[2]/div/div[1]/div/div[1]/div/div/div[1]/ul/li[{tag_position}]/div/img",
+                first=True,
+            ).attrs["src"]
+            valid_img = "https:" + not_valid_img
+            alt_img = req.html.xpath(
+                f"/html/body/div[1]/main/div[2]/div/div/div[2]/div/div[1]/div/div[1]/div/div/div[1]/ul/li[{tag_position}]/div/img",
+                first=True,
+            ).attrs["alt"]
+            return valid_img, alt_img
+        except AttributeError:
+            # time.sleep(5)
+            # print("None")
+            return "hello", "ok"
 
     def parse_product(self, prod):
         # print(prod.absolute_links)
         i = list(prod.absolute_links)
+        self.all_post_count += len(prod.absolute_links) - 1
         for j in i:
             # print(j)
             # for item in prod.absolute_links:
@@ -59,7 +121,12 @@ class ProductWB:
             else:
                 # print(item)
                 req = self.session.get(j)
-                req.html.render(sleep=2)
+                try:
+                    req.html.render(sleep=1, timeout=150)
+                except:
+                    print("Таймаут рендера страницы. Повторное подключения")
+                    req.html.render(sleep=2, timeout=150)
+
                 # i = r.html.find("span.price-block__final-price", first=True).text
                 # print(item)
                 # print("hello")
@@ -72,47 +139,106 @@ class ProductWB:
                     first=True,
                 ).text
                 if "/" in product_name:
-                    product_name = product_name.replace("/", "")
+                    product_name = " ".join(
+                        str(product_name)
+                        for product_name in product_name.split("/")[1:]
+                    )
                 # print(product_name)
-                not_valid_img = req.html.xpath(
-                    "/html/body/div[1]/main/div[2]/div/div/div[2]/div/div[1]/div/div[1]/div/div/div[1]/ul/li[1]/div/img",
-                    first=True,
-                ).attrs["src"]
+                # print(j)
+                valid_img, alt_img = self.get_src_and_alt_image(1, req)
+                valid_second_img, alt_second_img = self.get_src_and_alt_image(2, req)
 
-                valid_img = "https:" + not_valid_img
+                valid_third_img, alt_third_img = self.get_src_and_alt_image(3, req)
+
                 model = self.add_to_model(
-                    valid_name_product=product_name, valid_img=valid_img, price=price
+                    valid_name_product=product_name,
+                    alt_second_img=alt_second_img,
+                    alt_third_img=alt_third_img,
+                    valid_img=valid_img,
+                    alt_img=alt_img,
+                    valid_second_img=valid_second_img,
+                    valid_third_img=valid_third_img,
+                    price=price,
                 )
                 # print(model)
                 self.add_to_wp(model)
+
                 # print(not_valid_img)
 
     def get_all_products(self):
-        pages = self.request.html.xpath(
-            "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[5]/div/div",
-            first=True,
+        # pages = self.request.html.xpath(
+        #     "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[5]/div/div",
+        #     first=True,
+        # )
+        # pages = self.request.html.find("div.product-card-list", first=True)
+        pages = self.request.html.find(
+            "div.pageToInsert.pagination__wrapper", first=True
         )
         # print(pages.absolute_links == set())
-        if pages.absolute_links != set():
-            for page in pages.absolute_links:
-                # print(page)
-                page_url = self.session.get(page)
-                page_url.html.render(sleep=2)
+        if pages != None:
+            if pages.absolute_links != set():
+                for page in pages.absolute_links:
+                    # print(page)
+                    page_url = self.session.get(page)
+                    try:
+                        page_url.html.render(sleep=1, timeout=150)
+                    except:
+                        time.sleep(5)
+                        page_url.html.render(sleep=2, timeout=150)
 
-                product = page_url.html.xpath(
-                    "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[4]/div/div",
-                    first=True,
-                )
-                self.parse_product(product)
-                # print(prod.absolute_links)
-                # product_count.append(*prod.absolute_links)
-                # print(len(product_count))
+                    # product = page_url.html.xpath(
+                    #     "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[4]/div/div",
+                    #     first=True,
+                    # )
+                    product = self.request.html.find(
+                        "div.product-card-list", first=True
+                    )
+                    self.parse_product(product)
+                    # print(prod.absolute_links)
+                    # product_count.append(*prod.absolute_links)
+                    # print(len(product_count))
+            else:
+                # product = self.request.html.xpath(
+                #     "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[4]/div/div",
+                #     first=True,
+                # )
+                product = self.request.html.find("div.product-card-list", first=True)
+                if product != None:
+                    if product.absolute_links != set():
+                        self.parse_product(product)
         else:
-            product = self.request.html.xpath(
-                "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[4]/div/div",
-                first=True,
-            )
-            self.parse_product(product)
+            # print("ok")
+            product = self.request.html.find("div.product-card-list", first=True)
+            if product != None:
+                if product.absolute_links != set():
+                    self.parse_product(product)
+                else:
+                    print(
+                        "Не удалось загрузить страницу. Убедитесь в правильности ссылки и попробуйте снова"
+                    )
+            else:
+                print(
+                    "Не удалось загрузить страницу. Убедитесь в правильности ссылки и попробуйте снова"
+                )
+        print(f"Загружено {self.success_post_count} из {self.all_post_count}")
+        # product = self.request.html.xpath(
+        #     "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[4]/div/div",
+        #     first=True,
+        # )
+        # print("hello")
+        # if product != None:
+        #     print("foish")
+        #     self.parse_product(product)
+        # else:
+        #     print("ok")
+        # product = self.request.html.xpath(
+        #     "/html/body/div[1]/main/div[2]/div/div/div[1]/div[2]/div[2]/div[5]/div/div",
+        #     first=True,
+        # )
+        # product = self.request.html.find("div.product-card-list", first=True)
+        # if product != None:
+        #     self.parse_product(product)
+        # /html/body/div[1]/main/div[2]/div/div/div[1]/div[2]/div[2]/div[6]/div/div
         # return product
 
         # price = self.get_price()
@@ -121,15 +247,53 @@ class ProductWB:
         # self.add_to_wp(model)
 
 
+def count_slashes(url):
+    slash_count = 0
+    for symbol in url:
+        if symbol == "/":
+            slash_count += 1
+    return slash_count
+
+
+def validate_url_if_not_catalog_only(url):
+    if "=" in url:
+        return True
+    elif "seller" in url:
+        return True
+    elif "promotions" in url:
+        return True
+    elif "brands" in url:
+        return True
+
+    elif not url.endswith("/"):
+        print("ok")
+        url += "/"
+        count = count_slashes(url)
+        return False if count == 5 else True
+
+    else:
+        print("hello")
+        count = count_slashes(url)
+        return False if count == 5 else True
+    # if count == 4:
+    #     return False
+
+
 if __name__ == "__main__":
     print("Введите ссылку для парсинга")
     url = str(input())
-
-    s = HTMLSession()
-    r = s.get(url)
-    # print("hello")
-    # print(r.text)
-    r.html.render(sleep=2)
-    product_class_object = ProductWB(request=r)
-    product_class_object.get_all_products()
-    # print("gohor")
+    catalog_check = validate_url_if_not_catalog_only(url)
+    if catalog_check:
+        s = HTMLSession()
+        r = s.get(url)
+        # print("hello")
+        # print(r.text)
+        try:
+            r.html.render(sleep=2, timeout=150)
+        except:
+            r.html.render(sleep=1, timeout=150)
+        product_class_object = ProductWB(request=r)
+        product_class_object.get_all_products()
+        # print("gohor")
+    else:
+        print("can not copy from main catalog")

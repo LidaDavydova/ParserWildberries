@@ -20,12 +20,13 @@ consumer_secret = "cs_fc6beeed5832747ed21fb088c75a4858aac037f5"
 
 
 class ProductWB:
-    def __init__(self, request):
+    def __init__(self, request, url):
         # self.product = product
         self.request = request
         self.session = HTMLSession()
         self.success_post_count = 0
         self.all_post_count = 0
+        self.url = url
 
     def add_to_model(
         self,
@@ -122,26 +123,41 @@ class ProductWB:
                 # print(item)
                 req = self.session.get(j)
                 try:
-                    req.html.render(sleep=1, timeout=150)
+                    req.html.render(sleep=1, timeout=450)
                 except:
-                    print("Таймаут рендера страницы. Повторное подключения")
-                    req.html.render(sleep=2, timeout=150)
+                    time.sleep(5)
+                    # print("Таймаут рендера страницы. Повторное подключения")
+                    req.html.render(sleep=2, timeout=450)
 
                 # i = r.html.find("span.price-block__final-price", first=True).text
                 # print(item)
                 # print("hello")
-                price = req.html.xpath(
-                    '//*[@id="infoBlockProductCard"]/div[2]/div/div/p/span', first=True
-                ).text[:-2]
-                # print("hello", price)
-                product_name = req.html.xpath(
-                    "/html/body/div[1]/main/div[2]/div/div/div[2]/div/div[3]/div[7]/h1",
-                    first=True,
-                ).text
+                try:
+                    price = req.html.xpath(
+                        '//*[@id="infoBlockProductCard"]/div[2]/div/div/p/span',
+                        first=True,
+                    ).text[:-2]
+                    # print("hello", price)
+                    product_name = req.html.xpath(
+                        "/html/body/div[1]/main/div[2]/div/div/div[2]/div/div[3]/div[7]/h1",
+                        first=True,
+                    ).text
+                except:
+                    time.sleep(5)
+                    r = self.session.get(self.url)
+                    r.html.render(sleep=2, timeout=500)
+                    price = r.html.xpath(
+                        '//*[@id="infoBlockProductCard"]/div[2]/div/div/p/span',
+                        first=True,
+                    ).text[:-2]
+                    # print("hello", price)
+                    product_name = r.html.xpath(
+                        "/html/body/div[1]/main/div[2]/div/div/div[2]/div/div[3]/div[7]/h1",
+                        first=True,
+                    ).text
                 if "/" in product_name:
-                    product_name = " ".join(
-                        str(product_name)
-                        for product_name in product_name.split("/")[1:]
+                    product_name = "/".join(
+                        str(product_name) for product_name in product_name.split("/")
                     )
                 # print(product_name)
                 # print(j)
@@ -193,7 +209,15 @@ class ProductWB:
                     product = self.request.html.find(
                         "div.product-card-list", first=True
                     )
-                    self.parse_product(product)
+                    if product != None:
+                        self.parse_product(product)
+                    else:
+                        time.sleep(5)
+                        page_url.html.render(sleep=2, timeout=150)
+                        product = self.request.html.find(
+                            "div.product-card-list", first=True
+                        )
+                        self.parse_product(product)
                     # print(prod.absolute_links)
                     # product_count.append(*prod.absolute_links)
                     # print(len(product_count))
@@ -206,6 +230,22 @@ class ProductWB:
                 if product != None:
                     if product.absolute_links != set():
                         self.parse_product(product)
+                    else:
+                        time.sleep(10)
+                        product = self.request.html.find(
+                            "div.product-card-list", first=True
+                        )
+                        if product != None:
+                            if product.absolute_links != set():
+                                self.parse_product(product)
+                else:
+                    time.sleep(10)
+                    product = self.request.html.find(
+                        "div.product-card-list", first=True
+                    )
+                    if product != None:
+                        if product.absolute_links != set():
+                            self.parse_product(product)
         else:
             # print("ok")
             product = self.request.html.find("div.product-card-list", first=True)
@@ -213,37 +253,20 @@ class ProductWB:
                 if product.absolute_links != set():
                     self.parse_product(product)
                 else:
-                    print(
-                        "Не удалось загрузить страницу. Убедитесь в правильности ссылки и попробуйте снова"
+                    time.sleep(10)
+                    product = self.request.html.find(
+                        "div.product-card-list", first=True
                     )
+                    if product != None:
+                        if product.absolute_links != set():
+                            self.parse_product(product)
             else:
-                print(
-                    "Не удалось загрузить страницу. Убедитесь в правильности ссылки и попробуйте снова"
-                )
+                time.sleep(10)
+                product = self.request.html.find("div.product-card-list", first=True)
+                if product != None:
+                    if product.absolute_links != set():
+                        self.parse_product(product)
         print(f"Загружено {self.success_post_count} из {self.all_post_count}")
-        # product = self.request.html.xpath(
-        #     "/html/body/div[1]/main/div[2]/div/div/div[6]/div[1]/div[4]/div/div",
-        #     first=True,
-        # )
-        # print("hello")
-        # if product != None:
-        #     print("foish")
-        #     self.parse_product(product)
-        # else:
-        #     print("ok")
-        # product = self.request.html.xpath(
-        #     "/html/body/div[1]/main/div[2]/div/div/div[1]/div[2]/div[2]/div[5]/div/div",
-        #     first=True,
-        # )
-        # product = self.request.html.find("div.product-card-list", first=True)
-        # if product != None:
-        #     self.parse_product(product)
-        # /html/body/div[1]/main/div[2]/div/div/div[1]/div[2]/div[2]/div[6]/div/div
-        # return product
-
-        # price = self.get_price()
-        # valid_img, valid_name_product = self.parse_img()
-        # model = self.add_to_model(product_name, valid_img, price)
         # self.add_to_wp(model)
 
 
@@ -289,11 +312,10 @@ if __name__ == "__main__":
         # print("hello")
         # print(r.text)
         try:
-            r.html.render(sleep=2, timeout=150)
+            r.html.render(sleep=2, timeout=450)
         except:
-            r.html.render(sleep=1, timeout=150)
-        product_class_object = ProductWB(request=r)
+            r.html.render(sleep=1, timeout=450)
+        product_class_object = ProductWB(request=r, url=url)
         product_class_object.get_all_products()
-        # print("gohor")
     else:
         print("can not copy from main catalog")

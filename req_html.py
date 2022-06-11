@@ -3,6 +3,7 @@ import os
 
 import time
 from woocommerce import API
+import requests
 
 # from dotenv import load_dotenv
 
@@ -72,23 +73,28 @@ class ProductWB:
             url="https://4.kpipartners.ru",
             consumer_key=consumer_key,
             consumer_secret=consumer_secret,
-            timeout=2500,
+            timeout=150,
         )
-        response = wcapi.post("products", pr)
-
-        status = response.status_code
-        # self.all_post_count += 1
-        if status >= 400:
-            # print(self.success_post_count)
-            time.sleep(5)
+        try:
             response = wcapi.post("products", pr)
-            # print(response.status_code)
-            if response.status_code < 400:
-                self.success_post_count += 1
+
+            status = response.status_code
+            # self.all_post_count += 1
+            if status >= 400:
                 # print(self.success_post_count)
-            # print(response)
-        else:
+                time.sleep(5)
+                response = wcapi.post("products", pr)
+                # print(response.status_code)
+                if response.status_code < 400:
+                    self.success_post_count += 1
+                    # print(self.success_post_count)
+                # print(response)
+            else:
+                self.success_post_count += 1
+        except requests.exceptions.ConnectTimeout:
+            response = wcapi.post("products", pr)
             self.success_post_count += 1
+
         # print(self.success_post_count)
         # print(self.all_post_count)
 

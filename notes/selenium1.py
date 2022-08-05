@@ -49,7 +49,12 @@ class ProductWB:
             while True:
                 page += 1
                 batch = []
-                driver.get(self.url[:self.url.find('page=')+5]+str(page))
+                if '&' in self.url[self.url.find('page=')+5:]:
+                    next = self.url[self.url.find('page=')+5:].find('&')
+                    driver.get(self.url[:self.url.find('page=')+5]+str(page)+self.url[next:])
+                else:
+                    driver.get(self.url[:self.url.find('page=')+5]+str(page))
+                
                 try:
                   if 'Что-то пошло не так' in driver.find_element(By.XPATH, '//*[@id="error500"]/div/div/h1)').text:
                     print("restart script or page on Google or url doesn't exist")
@@ -73,7 +78,7 @@ class ProductWB:
                   driver.get(links[link])
                   WebDriverWait(driver, timeout=50).until(EC.presence_of_element_located((By.CLASS_NAME, "collapsable__content.j-description")))
                   descrip = driver.find_element(By.CLASS_NAME, value="collapsable__content.j-description").find_element(By.TAG_NAME, 'p').text
-                  img = driver.find_element(By.XPATH, '//*[@id="infoBlockProductCard"]/div[4]/div/div/ul').find_elements(By.TAG_NAME, 'img')
+                  img = driver.find_element(By.CLASS_NAME, 'swiper-wrapper').find_elements(By.TAG_NAME, 'img')
                   images = []
                   for i in img:
                     images.append({"src": i.get_attribute('src')})
@@ -96,7 +101,7 @@ if __name__ == "__main__":
             url += '?&page=1'
         else:
             url += 'page=1'
-    if 'seller' in url or 'brands' in url:
+    if 'seller' in url or 'brand' in url:
         s = Service(ChromeDriverManager().install())
         driver = Chrome(service=s)
         driver.get(url)

@@ -111,7 +111,7 @@ if __name__ == "__main__":
             url += 'page=1'
     if 'seller' in url or 'brand' in url:
         s = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(chrome_options=chrome_options)
+        driver = Chrome(service=s, chrome_options=chrome_options)
         driver.get(url)
         WebDriverWait(driver, timeout=30).until(EC.presence_of_element_located((By.CLASS_NAME, "product-card__main.j-card-link")))
         product_class_object = ProductWB(url=url)

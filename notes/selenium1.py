@@ -9,6 +9,14 @@ import os
 
 import time
 from woocommerce import API
+from selenium.webdriver.chrome.options import
+ 
+chrome_options = Options()
+
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-setuid-sandbox")
+ 
+
 
 
 
@@ -103,7 +111,7 @@ if __name__ == "__main__":
             url += 'page=1'
     if 'seller' in url or 'brand' in url:
         s = Service(ChromeDriverManager().install())
-        driver = Chrome(service=s)
+        driver = webdriver.Chrome(chrome_options=chrome_options)
         driver.get(url)
         WebDriverWait(driver, timeout=30).until(EC.presence_of_element_located((By.CLASS_NAME, "product-card__main.j-card-link")))
         product_class_object = ProductWB(url=url)

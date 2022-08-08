@@ -9,7 +9,7 @@ import os
 
 import time
 from woocommerce import API
-from selenium.webdriver.chrome.options import
+from selenium.webdriver.chrome.options import Options
  
 chrome_options = Options()
 

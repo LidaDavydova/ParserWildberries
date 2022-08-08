@@ -102,8 +102,8 @@ class ProductWB:
 
 if __name__ == "__main__":
     print("Введите ссылку для парсинга")
-    url = input()
-    #url = f"https://www.wildberries.ru/seller/25172?&page=1"
+    #url = input()
+    url = f"https://www.wildberries.ru/seller/25172?&page=1"
     if 'page=' not in url:
         if '?&' not in url:
             url += '?&page=1'

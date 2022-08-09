@@ -13,18 +13,22 @@ from selenium.webdriver.chrome.options import Options
  
 chrome_options = Options()
 
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-setuid-sandbox")
- 
-
-
+options.add_argument('--ignore-certificate-errors')
+options.add_argument("--test-type")
+options.addArguments("test-type");
+options.addArguments("start-maximized");
+options.addArguments("--window-size=1920,1080");
+options.addArguments("--enable-precise-memory-info");
+options.addArguments("--disable-popup-blocking");
+options.addArguments("--disable-default-apps");
+options.addArguments("test-type=browser");
+options.AddArgument("--incognito");
+options.AddArgument("--no-sandbox");
 
 
 consumer_key = "ck_88dd11b57062ee98fd6cd270fa115fe88e03e04f"
 
 consumer_secret = "cs_8ab6edb8afcbfc49c3acd66513345bb97ca8db64"
-
-
 
 
 class ProductWB:

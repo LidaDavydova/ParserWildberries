@@ -40,7 +40,7 @@ class ProductWB:
 
 
     def parse_product(self, page=0):
-        try:
+        for q in range(1):
             while True:
                 page += 1
                 batch = []
@@ -80,14 +80,12 @@ class ProductWB:
                   batch[link]["description"] = descrip
                   batch[link]["images"] = images
                 self.add_to_wp(batch)
-        except:
-            pass
 
 
 
 if __name__ == "__main__":
     print("Введите ссылку для парсинга")
-    url = input()
+    #url = input()
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
@@ -95,7 +93,7 @@ if __name__ == "__main__":
     chrome_prefs = {}
     chrome_options.experimental_options["prefs"] = chrome_prefs
     chrome_prefs["profile.default_content_settings"] = {"images": 2}
-    #url = f"https://www.wildberries.ru/seller/25172?&page=1"
+    url = f"https://www.wildberries.ru/seller/25172?&page=1"
     if 'page=' not in url:
         if '?&' not in url:
             url += '?&page=1'

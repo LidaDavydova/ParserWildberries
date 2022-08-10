@@ -1,6 +1,4 @@
-from undetected_chromedriver import Chrome
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -9,21 +7,6 @@ import os
 
 import time
 from woocommerce import API
-from selenium.webdriver.chrome.options import Options
- 
-chrome_options = Options()
-
-options.add_argument('--ignore-certificate-errors')
-options.add_argument("--test-type")
-options.addArguments("test-type");
-options.addArguments("start-maximized");
-options.addArguments("--window-size=1920,1080");
-options.addArguments("--enable-precise-memory-info");
-options.addArguments("--disable-popup-blocking");
-options.addArguments("--disable-default-apps");
-options.addArguments("test-type=browser");
-options.AddArgument("--incognito");
-options.AddArgument("--no-sandbox");
 
 
 consumer_key = "ck_88dd11b57062ee98fd6cd270fa115fe88e03e04f"
@@ -102,20 +85,24 @@ class ProductWB:
 
 
 
-
-
 if __name__ == "__main__":
     print("Введите ссылку для парсинга")
-    #url = input()
-    url = f"https://www.wildberries.ru/seller/25172?&page=1"
+    url = input()
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_prefs = {}
+    chrome_options.experimental_options["prefs"] = chrome_prefs
+    chrome_prefs["profile.default_content_settings"] = {"images": 2}
+    #url = f"https://www.wildberries.ru/seller/25172?&page=1"
     if 'page=' not in url:
         if '?&' not in url:
             url += '?&page=1'
         else:
             url += 'page=1'
     if 'seller' in url or 'brand' in url:
-        s = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=s, chrome_options=chrome_options)
+        driver = webdriver.Chrome(options=chrome_options)
         driver.get(url)
         WebDriverWait(driver, timeout=30).until(EC.presence_of_element_located((By.CLASS_NAME, "product-card__main.j-card-link")))
         product_class_object = ProductWB(url=url)

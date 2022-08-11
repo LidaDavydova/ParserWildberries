@@ -85,6 +85,7 @@ class ProductWB:
                     images.append({"src": i.get_attribute('src')})
                   batch[link]["description"] = descrip
                   batch[link]["images"] = images
+                print(batch)
                 self.add_to_wp(batch)
         except:
             pass

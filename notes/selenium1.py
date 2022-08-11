@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
+import sys
 
 import time
 from woocommerce import API
@@ -40,7 +41,7 @@ class ProductWB:
 
 
     def parse_product(self, page=0):
-        for q in range(1):
+        try:
             while True:
                 page += 1
                 batch = []
@@ -56,6 +57,11 @@ class ProductWB:
                     driver.quit()
                 except:
                   pass
+
+                time.sleep(10)
+                driver.refresh()
+                
+                WebDriverWait(driver, timeout=30).until(EC.presence_of_element_located((By.CLASS_NAME, "product-card__main.j-card-link")))
 
                 product_card = driver.find_elements(By.CLASS_NAME, value="product-card__img-wrap.img-plug.j-thumbnail-wrap")
                 price = driver.find_elements(By.CLASS_NAME, value="lower-price")
@@ -80,12 +86,15 @@ class ProductWB:
                   batch[link]["description"] = descrip
                   batch[link]["images"] = images
                 self.add_to_wp(batch)
+        except:
+            pass
 
 
 
 if __name__ == "__main__":
     print("Введите ссылку для парсинга")
-    #url = input()
+    #url = str(input())
+    url = "https://www.wildberries.ru/seller/25172?&page=1"
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
@@ -93,7 +102,7 @@ if __name__ == "__main__":
     chrome_prefs = {}
     chrome_options.experimental_options["prefs"] = chrome_prefs
     chrome_prefs["profile.default_content_settings"] = {"images": 2}
-    url = f"https://www.wildberries.ru/seller/25172?&page=1"
+    
     if 'page=' not in url:
         if '?&' not in url:
             url += '?&page=1'

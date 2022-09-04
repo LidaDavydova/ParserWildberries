@@ -98,8 +98,6 @@ class ProductWB:
 
 
 if __name__ == "__main__":
-    print("Введите ссылку для парсинга")
-    #url = str(input())
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")

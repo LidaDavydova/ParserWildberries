@@ -41,53 +41,59 @@ class ProductWB:
 
 
     def parse_product(self, page=0):
-        for i in range(1):
-            while True:
-                page += 1
-                batch = []
-                if '&' in self.url[self.url.find('page=')+5:]:
-                    next = self.url[self.url.find('page=')+5:].find('&')
-                    driver.get(self.url[:self.url.find('page=')+5]+str(page)+self.url[next:])
-                else:
-                    driver.get(self.url[:self.url.find('page=')+5]+str(page))
-                
-                try:
-                  if 'Что-то пошло не так' in driver.find_element(By.XPATH, '//*[@id="error500"]/div/div/h1)').text:
-                    print("restart script or page on Google or url doesn't exist")
-                    driver.quit()
-                except:
-                  pass
+        while True:
+            page += 1
+            batch = []
+            if '&' in self.url[self.url.find('page=')+5:]:
+                next = self.url[self.url.find('page=')+5:].find('&')
+                print(self.url[:self.url.find('page=')+5]+str(page)+self.url[url.find('page=')+5+next:])
+                driver.get(self.url[:self.url.find('page=')+5]+str(page)+self.url[url.find('page=')+5+next:])
+            else:
+                driver.get(self.url[:self.url.find('page=')+5]+str(page))
+            
+            try:
+              if 'Что-то пошло не так' in driver.find_element(By.XPATH, '//*[@id="error500"]/div/div/h1)').text:
+                print("restart script or page on Google or url doesn't exist")
+                driver.quit()
+                break
+            except:
+              pass
+            try:
+              if 'К сожалению' in driver.find_element(By.ID, 'divGoodsNotFound').text:
+                print("finished")
+                driver.quit()
+                break
+            except:
+              pass
 
-                time.sleep(10)
-                driver.refresh()
-                
-                WebDriverWait(driver, timeout=30).until(EC.presence_of_element_located((By.CLASS_NAME, "product-card__main.j-card-link")))
+            time.sleep(10)
+            driver.refresh()
+            
+            WebDriverWait(driver, timeout=30).until(EC.presence_of_element_located((By.CLASS_NAME, "product-card__main.j-card-link")))
 
-                product_card = driver.find_elements(By.CLASS_NAME, value="product-card__img-wrap.img-plug.j-thumbnail-wrap")
-                print(product_card)
-                price = driver.find_elements(By.CLASS_NAME, value="lower-price")
-                links = [i.get_attribute('href') for i in driver.find_elements(By.CLASS_NAME, value="product-card__main.j-card-link")]
+            product_card = driver.find_elements(By.CLASS_NAME, value="product-card__img-wrap.img-plug.j-thumbnail-wrap")
+            price = driver.find_elements(By.CLASS_NAME, value="lower-price")
+            links = [i.get_attribute('href') for i in driver.find_elements(By.CLASS_NAME, value="product-card__main.j-card-link")]
 
-                for i in range(len(product_card)):
-                  img = product_card[i].find_element(By.TAG_NAME, 'img')
-                  title = img.get_attribute('alt')
-                  batch.append({"name": title})
+            for i in range(len(product_card)):
+              img = product_card[i].find_element(By.TAG_NAME, 'img')
+              title = img.get_attribute('alt')
+              batch.append({"name": title})
 
-                for pr in range(len(price)):
-                  batch[pr]["regular_price"] = price[pr].text
+            for pr in range(len(price)):
+              batch[pr]["regular_price"] = price[pr].text
 
-                for link in range(len(links)):
-                  driver.get(links[link])
-                  WebDriverWait(driver, timeout=50).until(EC.presence_of_element_located((By.CLASS_NAME, "collapsable__content.j-description")))
-                  descrip = driver.find_element(By.CLASS_NAME, value="collapsable__content.j-description").find_element(By.TAG_NAME, 'p').text
-                  img = driver.find_element(By.CLASS_NAME, 'swiper-wrapper').find_elements(By.TAG_NAME, 'img')
-                  images = []
-                  for i in img:
-                    images.append({"src": i.get_attribute('src')})
-                  batch[link]["description"] = descrip
-                  batch[link]["images"] = images
-                print(batch)
-                self.add_to_wp(batch)
+            for link in range(len(links)):
+              driver.get(links[link])
+              WebDriverWait(driver, timeout=50).until(EC.presence_of_element_located((By.CLASS_NAME, "collapsable__content.j-description")))
+              descrip = driver.find_element(By.CLASS_NAME, value="collapsable__content.j-description").find_element(By.TAG_NAME, 'p').text
+              img = driver.find_element(By.CLASS_NAME, 'swiper-wrapper').find_elements(By.TAG_NAME, 'img')
+              images = []
+              for i in img:
+                images.append({"src": i.get_attribute('src')})
+              batch[link]["description"] = descrip
+              batch[link]["images"] = images
+            self.add_to_wp(batch)
 
 
 
@@ -101,10 +107,13 @@ if __name__ == "__main__":
     chrome_prefs = {}
     chrome_options.experimental_options["prefs"] = chrome_prefs
     chrome_prefs["profile.default_content_settings"] = {"images": 2}
-    url = "https://www.wildberries.ru/catalog/elektronika/muzyka-i-video?sort=popular&page=1&fbrand=6108"
+    url = sys.argv[-1]
     if 'page=' not in url:
         if '?&' not in url:
             url += '?&page=1'
+
+        elif '&' in url:
+            url += '&page=1'
         else:
             url += 'page=1'
     if 'seller' in url or 'brand' in url:
@@ -115,4 +124,3 @@ if __name__ == "__main__":
         print(product_class_object.parse_product())
     else:
         print("this is not seller's page")
-    

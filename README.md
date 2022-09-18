@@ -1,6 +1,6 @@
 <h1> Parsing data from brend's/seller's catalog wildberries.ru</h1>
 
-For parsing data you need to do these steps:
+<h3>For parsing data you need to do these steps:</h3>
 
 1. Create image from Dockerfile:
 	docker build -t parser-api .

@@ -6,5 +6,5 @@
 	docker build -t parser-api .
 2. Run image:
 	docker run -it parser-api url
-	url - brend's/seller's url
-	Example: docker run -it parser-api "https://www.wildberries.ru/catalog/elektronika/muzyka-i-video?sort=popular&page=1&fbrand=6108"
+	#url - brend's/seller's url
+Example: docker run -it parser-api "https://www.wildberries.ru/catalog/elektronika/muzyka-i-video?sort=popular&page=1&fbrand=6108"

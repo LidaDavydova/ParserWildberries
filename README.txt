@@ -1,4 +1,4 @@
-Parsing data from brend's/seller's catalog wildberries.ru
+<sub><sup>Parsing data from brend's/seller's catalog wildberries.ru</sub></sup>
 
 For parsing data you need to do these steps:
 

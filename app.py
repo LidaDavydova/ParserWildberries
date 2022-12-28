@@ -9,9 +9,10 @@ import sys
 import time
 from woocommerce import API
 
-
+#CHANGE YOUR OWN
 consumer_key = "ck_88dd11b57062ee98fd6cd270fa115fe88e03e04f"
 
+#CHANGE YOUR OWN
 consumer_secret = "cs_8ab6edb8afcbfc49c3acd66513345bb97ca8db64"
 
 
@@ -23,7 +24,7 @@ class ProductWB:
 
     def add_to_wp(self, pr):
         wcapi = API(
-            url="https://3.kpipartners.ru", #link to wordpress's site
+            url="https://3.kpipartners.ru", #link to wordpress's site (CHANGE YOUR OWN)
             consumer_key=consumer_key,
             consumer_secret=consumer_secret,
             timeout=2500,

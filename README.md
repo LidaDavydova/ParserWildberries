@@ -1,4 +1,4 @@
-<h1 align="center">Parsing data the catalog of brand/seller wildberries.ru to WordPress</h1>
+<h1 align="center">Parsing brand/seller catalog data wildberries.ru to WordPress</h1>
 
 <h3>For parsing data you need to do these steps:</h3>
 
